@@ -143,6 +143,8 @@
 
     .camera-frame.is-live video { display: block; }
 
+    .camera-frame.is-live:not(.rotate-for-portrait) video { filter: var(--film-filter, none); }
+
     .camera-frame.rotate-for-portrait video {
       position: absolute;
       top: 50%;
@@ -151,6 +153,7 @@
       height: 75%;
       max-width: none;
       transform: translate(-50%, -50%) rotate(90deg) scaleX(-1);
+      filter: var(--film-filter, none);
     }
 
     .placeholder {
@@ -418,6 +421,7 @@
             <option value="color">Sunday color</option>
             <option value="warm">Golden hour</option>
             <option value="mono">Classic black &amp; white</option>
+            <option value="vintage">Soft vintage</option>
           </select>
 
           <div class="shots" aria-label="Photo progress">
@@ -481,7 +485,12 @@
       function activeFilter() {
         if (filter.value === "mono") return "grayscale(1) contrast(1.05)";
         if (filter.value === "warm") return "sepia(.32) saturate(1.18)";
+        if (filter.value === "vintage") return "sepia(.2) saturate(.82) brightness(1.06) contrast(.9)";
         return "saturate(1.05)";
+      }
+
+      function syncFilmLook() {
+        cameraFrame.style.setProperty("--film-filter", activeFilter());
       }
 
       function syncCameraOrientation() {
@@ -669,6 +678,7 @@
 
       startButton.addEventListener("click", startCamera);
       captureButton.addEventListener("click", capturePhotos);
+      filter.addEventListener("change", syncFilmLook);
       document.getElementById("retakeButton").addEventListener("click", resetSession);
       document.getElementById("downloadButton").addEventListener("click", () => {
         if (!strip.width || !strip.height) {

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f0e7">
-  <meta name="description" content="A little at-home photo booth for the moments you want to keep. Choose a film look and make a photo strip.">
+  <meta name="description" content="A little at-home photo booth for the moments you want to keep. Choose a film and photo layout.">
   <title>Little Moments — A tiny photo booth</title>
   <style>
     :root {
@@ -225,8 +225,8 @@
         <div class="hero-copy">
           <p class="eyebrow">The at-home photo booth</p>
           <h1 id="page-title">Make a little memory.</h1>
-          <p>Gather your favorite people, find your best silly pose, and turn four little moments into something worth keeping.</p>
-          <a class="start-link" href="films.html">Start the booth <span aria-hidden="true">→</span></a>
+          <p>Gather your favorite people, find your best silly pose, and turn a moment together into something worth keeping.</p>
+          <a class="start-link" id="startLink" href="films.html">Start the booth <span aria-hidden="true">→</span></a>
           <p class="privacy-note">Free to use. Your photos stay right on your device.</p>
         </div>
 
@@ -246,7 +246,7 @@
       <section class="looks-section" aria-labelledby="looks-title">
         <div class="looks-heading">
           <h2 id="looks-title">Find your film mood</h2>
-          <p>Eleven little looks, one lovely photo strip.</p>
+          <p>Eleven little looks, and a photo layout for every moment.</p>
         </div>
         <div class="look-list" aria-label="Available film looks">
           <span class="look-chip">Sunday color</span>
@@ -265,5 +265,11 @@
     </main>
     <footer>Made for the moments you want to keep.</footer>
   </div>
+  <script>
+    const requestedLayout = new URLSearchParams(window.location.search).get("layout");
+    if (["1", "2", "3", "4", "6"].includes(requestedLayout)) {
+      document.getElementById("startLink").href = `films.html?layout=${requestedLayout}`;
+    }
+  </script>
 </body>
 </html>

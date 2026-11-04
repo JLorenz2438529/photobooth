@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f0e7">
-  <meta name="description" content="Browse eleven film looks and pick the perfect mood for your photo booth strip.">
+  <meta name="description" content="Choose a photo layout and film look for your Little Moments photo booth.">
   <title>Choose your film — Little Moments</title>
   <style>
     :root {
@@ -104,6 +104,67 @@
       font-size: 11px;
       font-weight: 700;
     }
+
+    .layout-section { margin: 0 0 29px; }
+    .layout-heading { margin: 0 0 12px; font: 22px Georgia, "Times New Roman", serif; }
+    .layout-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .layout-option {
+      display: flex;
+      min-width: 0;
+      min-height: 100px;
+      padding: 11px 8px;
+      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: #655b50;
+      background: rgba(255,253,249,.78);
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease, transform .15s ease;
+    }
+    .layout-option:hover { transform: translateY(-2px); border-color: #d7b8a7; }
+    .layout-option[aria-pressed="true"] {
+      border-color: var(--accent);
+      color: var(--ink);
+      background: #fffaf5;
+      box-shadow: 0 0 0 2px rgba(198, 94, 67, .1);
+    }
+    .layout-option:focus-visible { outline: 3px solid #e8ab98; outline-offset: 2px; }
+    .layout-preview {
+      display: grid;
+      width: 48px;
+      height: 38px;
+      padding: 3px;
+      gap: 2px;
+      border: 1px solid #d6c8b7;
+      border-radius: 3px;
+      background: #f0e7dc;
+    }
+    .layout-preview > span {
+      min-width: 0;
+      min-height: 0;
+      border: 1px solid rgba(255,255,255,.55);
+      background: linear-gradient(145deg, #d6ad88, #9ca38d);
+    }
+    .layout-option[data-layout="1"] .layout-preview {
+      width: 34px;
+      height: 40px;
+      padding: 3px 3px 8px;
+      background: #fffdf9;
+    }
+    .layout-preview[data-side="1"] { grid-template-columns: 1fr; }
+    .layout-preview[data-side="2"] { grid-template-columns: repeat(2, 1fr); }
+    .layout-preview[data-side="3"] { grid-template-columns: repeat(3, 1fr); }
+    .layout-preview[data-side="4"] { grid-template-columns: repeat(4, 1fr); }
+    .layout-preview[data-side="6"] { grid-template-columns: repeat(6, 1fr); }
+    .layout-name { font-size: 12px; font-weight: 650; text-align: center; }
+    .layout-count { color: var(--muted); font-size: 10px; }
 
     .film-grid {
       display: grid;
@@ -213,6 +274,8 @@
     @media (max-width: 760px) {
       .page { width: min(100% - 24px, 600px); padding-top: max(16px, env(safe-area-inset-top)); }
       main { padding-top: 29px; }
+      .layout-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .layout-option { min-height: 92px; }
       .film-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
       .film-card { padding: 8px; }
       .film-art { border-width: 4px; }
@@ -220,6 +283,7 @@
       .film-info strong { font-size: 16px; }
     }
     @media (max-width: 350px) {
+      .layout-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .film-grid { grid-template-columns: 1fr; }
       .film-art { aspect-ratio: 1.8; }
     }
@@ -232,17 +296,48 @@
   <div class="page">
     <header>
       <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span> little moments</div>
-      <a class="home-link" href="./">← Home</a>
+      <a class="home-link" id="homeLink" href="./">← Home</a>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
         <p class="eyebrow">Step one · Pick your film</p>
         <h1 id="page-title">Find your film mood.</h1>
-        <p class="intro-copy">Tap a look to see its preview and open the camera.</p>
+        <p class="intro-copy">Choose your layout and a film look, then open the camera.</p>
       </section>
 
-      <div class="step-note"><span class="step-number">1</span> Choose a film <span aria-hidden="true">→</span> <span class="step-number">2</span> Take your photos</div>
+      <div class="step-note"><span class="step-number">1</span> Pick a layout <span aria-hidden="true">→</span> <span class="step-number">2</span> Choose a film <span aria-hidden="true">→</span> <span class="step-number">3</span> Take your photos</div>
+
+      <section class="layout-section" aria-labelledby="layout-heading">
+        <h2 class="layout-heading" id="layout-heading">Choose your photo layout</h2>
+        <div class="layout-grid" role="group" aria-label="Photo layout">
+          <button class="layout-option" type="button" data-layout="1" aria-pressed="true">
+            <span class="layout-preview" data-side="1" aria-hidden="true"><span></span></span>
+            <span class="layout-name">Polaroid 1×1</span>
+            <span class="layout-count">1 photo</span>
+          </button>
+          <button class="layout-option" type="button" data-layout="2" aria-pressed="false">
+            <span class="layout-preview" data-side="2" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+            <span class="layout-name">Grid 2×2</span>
+            <span class="layout-count">4 photos</span>
+          </button>
+          <button class="layout-option" type="button" data-layout="3" aria-pressed="false">
+            <span class="layout-preview" data-side="3" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+            <span class="layout-name">Grid 3×3</span>
+            <span class="layout-count">9 photos</span>
+          </button>
+          <button class="layout-option" type="button" data-layout="4" aria-pressed="false">
+            <span class="layout-preview" data-side="4" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+            <span class="layout-name">Grid 4×4</span>
+            <span class="layout-count">16 photos</span>
+          </button>
+          <button class="layout-option" type="button" data-layout="6" aria-pressed="false">
+            <span class="layout-preview" data-side="6" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+            <span class="layout-name">Grid 6×6</span>
+            <span class="layout-count">36 photos</span>
+          </button>
+        </div>
+      </section>
 
       <section class="film-grid" aria-label="Available film looks">
         <a class="film-card" data-film="color" href="booth.html?film=color" aria-label="Choose Sunday color film and open the camera">
@@ -301,9 +396,45 @@
           <p class="film-caption">Deep shadows, dramatic contrast</p>
         </a>
       </section>
-      <p class="privacy-note">Your selected film will be used in the camera preview and saved photo strip. Photos stay on your device.</p>
+      <p class="privacy-note">Your selected film will be used in the camera preview and finished photo layout. Photos stay on your device.</p>
     </main>
     <footer>Made for the moments you want to keep.</footer>
   </div>
+  <script>
+    (() => {
+      const validLayouts = new Set(["1", "2", "3", "4", "6"]);
+      const query = new URLSearchParams(window.location.search);
+      let selectedLayout = query.get("layout");
+      if (!validLayouts.has(selectedLayout)) selectedLayout = "1";
+
+      const layoutButtons = [...document.querySelectorAll(".layout-option")];
+      const filmCards = [...document.querySelectorAll(".film-card")];
+      const homeLink = document.getElementById("homeLink");
+
+      function updateLayoutLinks() {
+        layoutButtons.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.layout === selectedLayout));
+        });
+        filmCards.forEach((card) => {
+          const target = new URL("booth.html", window.location.href);
+          target.searchParams.set("film", card.dataset.film);
+          target.searchParams.set("layout", selectedLayout);
+          card.href = target.href;
+        });
+        homeLink.href = `./?layout=${selectedLayout}`;
+      }
+
+      layoutButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedLayout = button.dataset.layout;
+          query.set("layout", selectedLayout);
+          history.replaceState(null, "", `${window.location.pathname}?${query}`);
+          updateLayoutLinks();
+        });
+      });
+
+      updateLayoutLinks();
+    })();
+  </script>
 </body>
 </html>

@@ -284,27 +284,25 @@
     }
 
     .shots {
-      display: flex;
+      display: grid;
       margin: 22px 0 23px;
-      gap: 9px;
+      gap: 5px;
     }
 
     .shot {
-      display: grid;
-      width: 34px;
-      height: 40px;
-      place-items: center;
+      width: 14px;
+      height: 14px;
       border: 1px solid #e4dbcf;
-      border-radius: 5px;
-      color: #a79d91;
+      border-radius: 3px;
       background: #f8f4ee;
-      font-size: 12px;
       transition: .2s ease;
     }
 
+    .shots[data-side="1"] .shot { width: 24px; height: 24px; }
+    .shots[data-side="2"] .shot { width: 18px; height: 18px; }
+
     .shot.done {
       border-color: #d9a28f;
-      color: white;
       background: var(--accent);
     }
 
@@ -365,12 +363,14 @@
 
     #strip {
       display: block;
-      width: min(100%, 280px);
+      width: min(100%, 520px);
       height: auto;
       margin: 0 auto 18px;
       border: 1px solid #e5ddd2;
       box-shadow: 0 8px 24px rgba(45, 37, 28, .12);
     }
+
+    #strip.polaroid { width: min(100%, 300px); }
 
     .result-actions {
       display: flex;
@@ -400,7 +400,6 @@
       .studio-caption { right: 14px; bottom: 14px; left: 14px; }
       .controls { padding: 23px 20px; }
       .fine-print { margin-top: 22px; }
-      select { font-size: 16px; }
     }
 
     @media (max-width: 420px) {
@@ -418,14 +417,14 @@
   <div class="page">
     <header>
       <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span> little moments</div>
-      <a class="home-link" href="films.html">← Change film</a>
+      <a class="home-link" id="changeFilmLink" href="films.html">← Change film</a>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
         <p class="eyebrow">Your photo booth</p>
         <h1 id="page-title">Strike a pose.</h1>
-        <p>Your chosen film is ready. Get together and make four little memories.</p>
+        <p id="layoutIntro">Your chosen film is ready. Get together and make a little memory.</p>
       </section>
 
       <section class="booth" aria-label="Photo booth">
@@ -445,14 +444,11 @@
 
         <aside class="controls">
           <h2>Ready, when you are</h2>
-          <p class="helper">Your film is applied to the live preview and every picture in your photo strip.</p>
+          <p class="helper">Your chosen film and layout are ready. Both will be used in your finished photo.</p>
           <div class="selected-look" id="selectedLook" aria-live="polite"></div>
+          <div class="selected-look" id="selectedLayout" aria-live="polite"></div>
 
-          <div class="shots" aria-label="Photo progress">
-            <span class="shot" id="shot1">1</span>
-            <span class="shot" id="shot2">2</span>
-            <span class="shot" id="shot3">3</span>
-            <span class="shot" id="shot4">4</span>
+          <div class="shots" id="shots" aria-label="Photo progress">
           </div>
 
           <p class="status" id="status" role="status">Ready when you are. Camera access stays on your device.</p>
@@ -463,11 +459,11 @@
       </section>
 
       <section class="result" id="result" aria-labelledby="result-title">
-        <h2 id="result-title">A little strip of joy</h2>
-        <p>Your photos are ready. Download the strip to keep it.</p>
-        <canvas id="strip" aria-label="Your finished four-photo strip"></canvas>
+        <h2 id="result-title">Your photos are ready</h2>
+        <p id="resultDescription">Download your finished photo layout to keep it.</p>
+        <canvas id="strip" aria-label="Your finished photo layout"></canvas>
         <div class="result-actions">
-          <button class="primary" id="downloadButton" type="button">Download photo strip</button>
+          <button class="primary" id="downloadButton" type="button">Download photo layout</button>
           <button class="secondary" id="retakeButton" type="button">Take another</button>
         </div>
       </section>
@@ -497,12 +493,29 @@
         mono: { name: "Classic black & white", filter: "grayscale(1) contrast(1.05)" },
         noir: { name: "Midnight noir", filter: "grayscale(1) contrast(1.42) brightness(.88)" }
       };
-      const requestedFilm = new URLSearchParams(window.location.search).get("film");
+      const layoutChoices = {
+        "1": { side: 1, count: 1, label: "Polaroid 1×1", fileLabel: "polaroid" },
+        "2": { side: 2, count: 4, label: "Grid 2×2", fileLabel: "grid-2x2" },
+        "3": { side: 3, count: 9, label: "Grid 3×3", fileLabel: "grid-3x3" },
+        "4": { side: 4, count: 16, label: "Grid 4×4", fileLabel: "grid-4x4" },
+        "6": { side: 6, count: 36, label: "Grid 6×6", fileLabel: "grid-6x6" }
+      };
+      const searchParams = new URLSearchParams(window.location.search);
+      const requestedFilm = searchParams.get("film");
+      const requestedLayout = searchParams.get("layout");
       const selectedFilm = Object.prototype.hasOwnProperty.call(filmLooks, requestedFilm) ? requestedFilm : "color";
+      const selectedLayout = layoutChoices[requestedLayout] || layoutChoices["1"];
       const selectedLook = document.getElementById("selectedLook");
+      const selectedLayoutElement = document.getElementById("selectedLayout");
+      const shots = document.getElementById("shots");
       const result = document.getElementById("result");
       const strip = document.getElementById("strip");
       const stripContext = strip.getContext("2d");
+      const resultTitle = document.getElementById("result-title");
+      const resultDescription = document.getElementById("resultDescription");
+      const layoutIntro = document.getElementById("layoutIntro");
+      const downloadButton = document.getElementById("downloadButton");
+      const changeFilmLink = document.getElementById("changeFilmLink");
       const photos = [];
       let stream = null;
       let capturing = false;
@@ -516,9 +529,18 @@
       }
 
       function updateProgress() {
-        for (let index = 0; index < 4; index += 1) {
-          document.getElementById(`shot${index + 1}`).classList.toggle("done", index < photos.length);
-        }
+        shots.dataset.count = String(selectedLayout.count);
+        shots.dataset.side = String(selectedLayout.side);
+        const shotSize = selectedLayout.side === 1 ? 24 : selectedLayout.side === 2 ? 18 : 14;
+        shots.style.gridTemplateColumns = `repeat(${selectedLayout.side}, ${shotSize}px)`;
+        shots.setAttribute("aria-label", `Photo progress: ${photos.length} of ${selectedLayout.count}`);
+        shots.replaceChildren(...Array.from({ length: selectedLayout.count }, (_, index) => {
+          const shot = document.createElement("span");
+          shot.className = "shot";
+          shot.classList.toggle("done", index < photos.length);
+          shot.setAttribute("aria-label", `Photo ${index + 1}${index < photos.length ? " complete" : ""}`);
+          return shot;
+        }));
       }
 
       function activeFilter() {
@@ -532,9 +554,27 @@
       }
 
       selectedLook.textContent = filmLooks[selectedFilm].name;
+      selectedLayoutElement.textContent = `${selectedLayout.label} · ${selectedLayout.count} photo${selectedLayout.count === 1 ? "" : "s"}`;
+      layoutIntro.textContent = selectedLayout.count === 1
+        ? "Your chosen film is ready. Make a keepsake Polaroid."
+        : `Your chosen film is ready. Take ${selectedLayout.count} photos for your ${selectedLayout.side}×${selectedLayout.side} grid.`;
+      resultTitle.textContent = selectedLayout.count === 1 ? "Your little Polaroid" : `Your ${selectedLayout.side}×${selectedLayout.side} photo grid`;
+      resultDescription.textContent = selectedLayout.count === 1
+        ? "Your keepsake is ready to download."
+        : `All ${selectedLayout.count} photos are arranged in your grid. Download it to keep it.`;
+      downloadButton.textContent = `Download ${selectedLayout.count === 1 ? "Polaroid" : "photo grid"}`;
       cameraFrame.style.setProperty("--film-filter", activeFilter());
+      captureButton.textContent = `Take ${selectedLayout.count === 1 ? "my photo" : `${selectedLayout.count} photos`}`;
+      changeFilmLink.href = `films.html?layout=${selectedLayout.side}`;
+      updateProgress();
 
       async function startCamera() {
+        if (capturing) {
+          cancelled = true;
+          startButton.disabled = true;
+          setStatus("Stopping the photo session…");
+          return;
+        }
         if (stream) return;
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           setStatus("Camera access is not available here. Open this page in a modern browser over HTTPS or localhost.", true);
@@ -559,7 +599,7 @@
           cameraFrame.classList.add("is-live");
           captureButton.disabled = false;
           startButton.textContent = "Camera is ready";
-          setStatus("Camera ready! Find your pose and take four photos.");
+          setStatus(`Camera ready! Find your pose for ${selectedLayout.count} photo${selectedLayout.count === 1 ? "" : "s"}.`);
         } catch (error) {
           startButton.disabled = false;
           const messages = {
@@ -606,97 +646,115 @@
         updateProgress();
         result.classList.remove("visible");
         captureButton.disabled = true;
-        startButton.disabled = true;
+        startButton.disabled = false;
+        startButton.textContent = "Cancel photo session";
 
         try {
-          for (let index = 0; index < 4; index += 1) {
-            setStatus(`Get ready… photo ${index + 1} of 4`);
+          for (let index = 0; index < selectedLayout.count; index += 1) {
+            setStatus(`Get ready… photo ${index + 1} of ${selectedLayout.count}`);
             if (!await countDown()) break;
             photos.push(takeSnapshot());
             updateProgress();
             flash.classList.remove("fire");
             void flash.offsetWidth;
             flash.classList.add("fire");
-            setStatus(index < 3 ? `Lovely! ${3 - index} ${3 - index === 1 ? "photo" : "photos"} to go.` : "All four! Putting your strip together…");
+            const remaining = selectedLayout.count - index - 1;
+            setStatus(remaining > 0
+              ? `Lovely! ${remaining} ${remaining === 1 ? "photo" : "photos"} to go.`
+              : "All done! Putting your photos together…");
             await wait(850);
             if (cancelled) break;
           }
-          if (photos.length === 4) {
+          if (photos.length === selectedLayout.count) {
             renderStrip();
             result.classList.add("visible");
-            setStatus("Your photo strip is ready to download!");
+            setStatus("Your photo layout is ready to download!");
             result.scrollIntoView({ behavior: "smooth", block: "center" });
           } else {
-            setStatus("Photo session stopped. Press “Take my photos” when you’re ready.");
+            setStatus("Photo session stopped. Press the photo button when you’re ready.");
           }
         } catch (error) {
-          setStatus(`Could not create the photo strip: ${error.message || "unknown error"}`, true);
+          setStatus(`Could not create your photo layout: ${error.message || "unknown error"}`, true);
         } finally {
           capturing = false;
           countdown.classList.remove("visible");
           captureButton.disabled = !stream;
           startButton.disabled = Boolean(stream);
+          if (stream) startButton.textContent = "Camera is ready";
         }
       }
 
       function renderStrip() {
-        const width = 720;
-        const padding = 28;
-        const imageHeight = photos.length
-          ? Math.round((width - padding * 2) / (photos[0].width / photos[0].height))
-          : 440;
-        const gap = 18;
-        const headerHeight = 115;
-        const footerHeight = 105;
+        const width = 900;
+        const background = ["mono", "noir"].includes(selectedFilm) ? "#f2f0eb" : "#fffaf1";
+        strip.classList.toggle("polaroid", selectedLayout.side === 1);
         strip.width = width;
-        strip.height = padding * 2 + headerHeight + imageHeight * 4 + gap * 3 + footerHeight;
+        strip.height = selectedLayout.side === 1 ? 1000 : width;
+        stripContext.fillStyle = background;
+        if (selectedLayout.side === 1) {
+          stripContext.fillRect(0, 0, strip.width, strip.height);
+          stripContext.fillStyle = "#fff";
+          stripContext.shadowColor = "rgba(54, 43, 31, .16)";
+          stripContext.shadowBlur = 24;
+          stripContext.shadowOffsetY = 8;
+          stripContext.fillRect(45, 45, 810, 910);
+          stripContext.shadowColor = "transparent";
+          stripContext.shadowBlur = 0;
+          stripContext.shadowOffsetY = 0;
+          drawPhotoCover(photos[0], 82, 82, 736, 736);
+          stripContext.fillStyle = "#766b5d";
+          stripContext.textAlign = "center";
+          stripContext.font = "italic 34px Georgia, serif";
+          stripContext.fillText("little moments", width / 2, 875);
+          stripContext.fillStyle = "#a29686";
+          stripContext.font = "13px Segoe UI, sans-serif";
+          stripContext.letterSpacing = "3px";
+          stripContext.fillText(filmLooks[selectedFilm].name.toUpperCase(), width / 2, 918);
+          stripContext.letterSpacing = "0";
+          return;
+        }
 
-        stripContext.fillStyle = ["mono", "noir"].includes(selectedFilm) ? "#f2f0eb" : "#fffaf1";
         stripContext.fillRect(0, 0, strip.width, strip.height);
-
-        stripContext.fillStyle = "#766b5d";
-        stripContext.textAlign = "center";
-        stripContext.font = "italic 30px Georgia, serif";
-        stripContext.fillText("little moments", width / 2, 69);
-        stripContext.fillStyle = "#a29686";
-        stripContext.font = "12px Segoe UI, sans-serif";
-        stripContext.letterSpacing = "3px";
-        stripContext.fillText(filmLooks[selectedFilm].name.toUpperCase(), width / 2, 99);
-        stripContext.letterSpacing = "0";
+        const padding = 26;
+        const gap = selectedLayout.side >= 6 ? 8 : 13;
+        const cellSize = (width - padding * 2 - gap * (selectedLayout.side - 1)) / selectedLayout.side;
+        const photoPadding = selectedLayout.side >= 5 ? 2 : 5;
 
         photos.forEach((photo, index) => {
-          const y = padding + headerHeight + index * (imageHeight + gap);
-          stripContext.save();
-          stripContext.shadowColor = "rgba(54, 43, 31, .12)";
-          stripContext.shadowBlur = 12;
-          stripContext.shadowOffsetY = 3;
+          const column = index % selectedLayout.side;
+          const row = Math.floor(index / selectedLayout.side);
+          const x = padding + column * (cellSize + gap);
+          const y = padding + row * (cellSize + gap);
           stripContext.fillStyle = "#fff";
-          stripContext.fillRect(padding, y, width - padding * 2, imageHeight);
-          stripContext.restore();
-
-          const sourceRatio = photo.width / photo.height;
-          const targetRatio = (width - padding * 2) / imageHeight;
-          let sx = 0;
-          let sy = 0;
-          let sw = photo.width;
-          let sh = photo.height;
-          if (sourceRatio > targetRatio) {
-            sw = photo.height * targetRatio;
-            sx = (photo.width - sw) / 2;
-          } else {
-            sh = photo.width / targetRatio;
-            sy = (photo.height - sh) / 2;
-          }
-          stripContext.save();
-          stripContext.filter = activeFilter();
-          stripContext.drawImage(photo, sx, sy, sw, sh, padding, y, width - padding * 2, imageHeight);
-          stripContext.restore();
+          stripContext.fillRect(x, y, cellSize, cellSize);
+          drawPhotoCover(
+            photo,
+            x + photoPadding,
+            y + photoPadding,
+            cellSize - photoPadding * 2,
+            cellSize - photoPadding * 2
+          );
         });
+      }
 
-        stripContext.fillStyle = "#9c8d79";
-        stripContext.textAlign = "center";
-        stripContext.font = "italic 18px Georgia, serif";
-        stripContext.fillText("keep the good times close ✳", width / 2, strip.height - 42);
+      function drawPhotoCover(photo, x, y, width, height) {
+        const targetRatio = width / height;
+        const sourceRatio = photo.width / photo.height;
+        let sx = 0;
+        let sy = 0;
+        let sw = photo.width;
+        let sh = photo.height;
+        if (sourceRatio > targetRatio) {
+          sw = photo.height * targetRatio;
+          sx = (photo.width - sw) / 2;
+        } else {
+          sh = photo.width / targetRatio;
+          sy = (photo.height - sh) / 2;
+        }
+        stripContext.save();
+        stripContext.filter = activeFilter();
+        stripContext.drawImage(photo, sx, sy, sw, sh, x, y, width, height);
+        stripContext.restore();
       }
 
       function resetSession() {
@@ -707,7 +765,7 @@
         photos.length = 0;
         updateProgress();
         result.classList.remove("visible");
-        setStatus("Camera ready! Find your pose and take four photos.");
+        setStatus(`Camera ready! Find your pose for ${selectedLayout.count} photo${selectedLayout.count === 1 ? "" : "s"}.`);
         captureButton.disabled = !stream;
       }
 
@@ -716,7 +774,7 @@
       document.getElementById("retakeButton").addEventListener("click", resetSession);
       document.getElementById("downloadButton").addEventListener("click", () => {
         if (!strip.width || !strip.height) {
-          setStatus("Take your photos before downloading a strip.", true);
+          setStatus("Take your photos before downloading the layout.", true);
           return;
         }
         strip.toBlob((blob) => {
@@ -727,7 +785,7 @@
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
-          link.download = "little-moments-photo-strip.png";
+          link.download = `little-moments-${selectedLayout.fileLabel}-${selectedFilm}.png`;
           document.body.appendChild(link);
           link.click();
           link.remove();

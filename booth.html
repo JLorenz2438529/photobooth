@@ -464,7 +464,7 @@
         <canvas id="strip" aria-label="Your finished photo layout"></canvas>
         <div class="result-actions">
           <button class="primary" id="downloadButton" type="button">Download photo layout</button>
-          <button class="secondary" id="retakeButton" type="button">Take another</button>
+          <button class="secondary" id="retakeButton" type="button">Remake photos</button>
         </div>
       </section>
     </main>
@@ -765,8 +765,11 @@
         photos.length = 0;
         updateProgress();
         result.classList.remove("visible");
+        stripContext.clearRect(0, 0, strip.width, strip.height);
         setStatus(`Camera ready! Find your pose for ${selectedLayout.count} photo${selectedLayout.count === 1 ? "" : "s"}.`);
         captureButton.disabled = !stream;
+        captureButton.focus();
+        captureButton.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
       startButton.addEventListener("click", startCamera);

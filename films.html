@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f0e7">
+  <meta name="description" content="Browse eleven film looks and pick the perfect mood for your photo booth strip.">
+  <title>Choose your film — Little Moments</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f6f0e7;
+      --ink: #29251f;
+      --muted: #82796e;
+      --accent: #c65e43;
+      --line: #e4dbcf;
+      --card: #fffdf9;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-height: 100%; -webkit-text-size-adjust: 100%; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 10% 12%, rgba(226, 198, 155, .22), transparent 30rem),
+        var(--paper);
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+
+    a { color: inherit; }
+    .page { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 42px; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font: 700 19px Georgia, "Times New Roman", serif;
+      letter-spacing: -.3px;
+    }
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--accent);
+      font: 18px Georgia, serif;
+    }
+    .home-link {
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .home-link:hover { background: white; }
+    main { padding-top: 40px; }
+    .intro { margin-bottom: 27px; text-align: center; }
+    .eyebrow {
+      margin: 0 0 9px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font: 500 clamp(38px, 6vw, 58px)/1.08 Georgia, "Times New Roman", serif;
+      letter-spacing: -1.7px;
+    }
+    .intro-copy { margin: 12px 0 0; color: var(--muted); font-size: 15px; }
+    .step-note {
+      display: flex;
+      width: fit-content;
+      margin: 0 auto 23px;
+      padding: 9px 13px;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #756a5d;
+      background: rgba(255,253,249,.7);
+      font-size: 12px;
+    }
+    .step-number {
+      display: grid;
+      width: 21px;
+      height: 21px;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .film-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 17px;
+    }
+    .film-card {
+      display: flex;
+      min-width: 0;
+      padding: 12px;
+      flex-direction: column;
+      border: 1px solid #e8dfd3;
+      border-radius: 13px;
+      background: var(--card);
+      box-shadow: 0 8px 22px rgba(67, 51, 35, .045);
+      text-decoration: none;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .film-card:hover {
+      transform: translateY(-3px);
+      border-color: #d7b8a7;
+      box-shadow: 0 14px 30px rgba(67, 51, 35, .11);
+    }
+    .film-card:focus-visible { outline: 3px solid #e8ab98; outline-offset: 3px; }
+    .film-art {
+      position: relative;
+      display: grid;
+      width: 100%;
+      aspect-ratio: 1.48;
+      overflow: hidden;
+      place-items: center;
+      border: 5px solid white;
+      border-radius: 7px;
+      background:
+        radial-gradient(ellipse at 50% 108%, #61735d 0 24%, transparent 25%),
+        radial-gradient(ellipse at 13% 108%, #a67e5c 0 25%, transparent 26%),
+        linear-gradient(155deg, #c9a07c 0%, #edcfa4 48%, #9da38a 100%);
+      box-shadow: inset 0 0 0 1px rgba(80, 65, 48, .08);
+      filter: var(--preview-filter, none);
+    }
+    .film-art::before {
+      position: absolute;
+      top: 14%;
+      right: 18%;
+      width: 21%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(255,245,216,.83);
+      content: "";
+      filter: blur(1px);
+    }
+    .film-art::after {
+      position: absolute;
+      bottom: 12%;
+      left: 36%;
+      width: 22%;
+      height: 47%;
+      border-radius: 48% 48% 12% 12%;
+      background: #765847;
+      content: "";
+      box-shadow: 37px 9px 0 -2px #53645b;
+    }
+    .film-card:nth-child(2) .film-art::after { left: 31%; }
+    .film-card:nth-child(4) .film-art::after { bottom: 7%; }
+    .film-card:nth-child(6) .film-art::before { width: 28%; }
+    .art-label {
+      position: absolute;
+      z-index: 1;
+      right: 8px;
+      bottom: 8px;
+      padding: 5px 8px;
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 999px;
+      color: white;
+      background: rgba(45, 40, 34, .27);
+      font-size: 9px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .film-card[data-film="portra"] .film-art { --preview-filter: sepia(.12) saturate(1.28) contrast(.94) brightness(1.04); }
+    .film-card[data-film="golden"] .film-art { --preview-filter: sepia(.34) saturate(1.25) brightness(1.04); }
+    .film-card[data-film="vintage"] .film-art { --preview-filter: sepia(.2) saturate(.82) brightness(1.06) contrast(.9); }
+    .film-card[data-film="faded"] .film-art { --preview-filter: sepia(.12) saturate(.72) brightness(1.1) contrast(.82); }
+    .film-card[data-film="dream"] .film-art { --preview-filter: saturate(.78) brightness(1.1) contrast(.88); }
+    .film-card[data-film="rose"] .film-art { --preview-filter: sepia(.18) hue-rotate(320deg) saturate(1.18) brightness(1.03); }
+    .film-card[data-film="disposable"] .film-art { --preview-filter: contrast(1.16) saturate(1.38) sepia(.08); }
+    .film-card[data-film="cinema"] .film-art { --preview-filter: contrast(1.22) saturate(.78) brightness(.96); }
+    .film-card[data-film="mono"] .film-art { --preview-filter: grayscale(1) contrast(1.05); }
+    .film-card[data-film="noir"] .film-art { --preview-filter: grayscale(1) contrast(1.42) brightness(.88); }
+    .film-info { display: flex; padding: 12px 3px 2px; align-items: center; justify-content: space-between; gap: 6px; }
+    .film-info strong { font: 18px Georgia, "Times New Roman", serif; }
+    .film-arrow {
+      display: grid;
+      width: 29px;
+      height: 29px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--accent);
+      background: #f8eee8;
+      font-size: 16px;
+    }
+    .film-caption { margin: 3px 3px 1px; color: var(--muted); font-size: 11px; }
+    .privacy-note { margin: 24px 0 0; color: #948a7e; font-size: 11px; text-align: center; }
+    footer { padding-top: 25px; color: #978d81; font-size: 11px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 24px, 600px); padding-top: max(16px, env(safe-area-inset-top)); }
+      main { padding-top: 29px; }
+      .film-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+      .film-card { padding: 8px; }
+      .film-art { border-width: 4px; }
+      .film-info { padding-top: 10px; }
+      .film-info strong { font-size: 16px; }
+    }
+    @media (max-width: 350px) {
+      .film-grid { grid-template-columns: 1fr; }
+      .film-art { aspect-ratio: 1.8; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span> little moments</div>
+      <a class="home-link" href="./">← Home</a>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Step one · Pick your film</p>
+        <h1 id="page-title">Find your film mood.</h1>
+        <p class="intro-copy">Tap a look to see its preview and open the camera.</p>
+      </section>
+
+      <div class="step-note"><span class="step-number">1</span> Choose a film <span aria-hidden="true">→</span> <span class="step-number">2</span> Take your photos</div>
+
+      <section class="film-grid" aria-label="Available film looks">
+        <a class="film-card" data-film="color" href="booth.html?film=color" aria-label="Choose Sunday color film and open the camera">
+          <div class="film-art"><span class="art-label">Sunday color</span></div>
+          <div class="film-info"><strong>Sunday color</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Bright, true-to-life color</p>
+        </a>
+        <a class="film-card" data-film="portra" href="booth.html?film=portra" aria-label="Choose Portra glow film and open the camera">
+          <div class="film-art"><span class="art-label">Portra glow</span></div>
+          <div class="film-info"><strong>Portra glow</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Soft skin tones and warm color</p>
+        </a>
+        <a class="film-card" data-film="golden" href="booth.html?film=golden" aria-label="Choose Golden hour film and open the camera">
+          <div class="film-art"><span class="art-label">Golden hour</span></div>
+          <div class="film-info"><strong>Golden hour</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">A little sun in every shot</p>
+        </a>
+        <a class="film-card" data-film="vintage" href="booth.html?film=vintage" aria-label="Choose Soft vintage film and open the camera">
+          <div class="film-art"><span class="art-label">Soft vintage</span></div>
+          <div class="film-info"><strong>Soft vintage</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Gentle, faded nostalgia</p>
+        </a>
+        <a class="film-card" data-film="faded" href="booth.html?film=faded" aria-label="Choose Faded memories film and open the camera">
+          <div class="film-art"><span class="art-label">Faded memories</span></div>
+          <div class="film-info"><strong>Faded memories</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Matte tones and soft contrast</p>
+        </a>
+        <a class="film-card" data-film="dream" href="booth.html?film=dream" aria-label="Choose Dreamy pastel film and open the camera">
+          <div class="film-art"><span class="art-label">Dreamy pastel</span></div>
+          <div class="film-info"><strong>Dreamy pastel</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Airy, soft-focus colors</p>
+        </a>
+        <a class="film-card" data-film="rose" href="booth.html?film=rose" aria-label="Choose Rose-tinted film and open the camera">
+          <div class="film-art"><span class="art-label">Rose-tinted</span></div>
+          <div class="film-info"><strong>Rose-tinted</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">A rosy little daydream</p>
+        </a>
+        <a class="film-card" data-film="disposable" href="booth.html?film=disposable" aria-label="Choose Disposable flash film and open the camera">
+          <div class="film-art"><span class="art-label">Disposable flash</span></div>
+          <div class="film-info"><strong>Disposable flash</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Punchy color and party energy</p>
+        </a>
+        <a class="film-card" data-film="cinema" href="booth.html?film=cinema" aria-label="Choose Indie cinema film and open the camera">
+          <div class="film-art"><span class="art-label">Indie cinema</span></div>
+          <div class="film-info"><strong>Indie cinema</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Moody tones, movie feeling</p>
+        </a>
+        <a class="film-card" data-film="mono" href="booth.html?film=mono" aria-label="Choose Classic black and white film and open the camera">
+          <div class="film-art"><span class="art-label">Classic B&amp;W</span></div>
+          <div class="film-info"><strong>Classic B&amp;W</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Timeless and beautifully simple</p>
+        </a>
+        <a class="film-card" data-film="noir" href="booth.html?film=noir" aria-label="Choose Midnight noir film and open the camera">
+          <div class="film-art"><span class="art-label">Midnight noir</span></div>
+          <div class="film-info"><strong>Midnight noir</strong><span class="film-arrow" aria-hidden="true">→</span></div>
+          <p class="film-caption">Deep shadows, dramatic contrast</p>
+        </a>
+      </section>
+      <p class="privacy-note">Your selected film will be used in the camera preview and saved photo strip. Photos stay on your device.</p>
+    </main>
+    <footer>Made for the moments you want to keep.</footer>
+  </div>
+</body>
+</html>

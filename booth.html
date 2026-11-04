@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f0e7">
-  <title>Choose your film — Little Moments</title>
+  <title>Take your photos — Little Moments</title>
   <style>
     :root {
       color-scheme: light;
@@ -83,6 +83,26 @@
     }
 
     .home-link:hover { background: white; }
+    .selected-look {
+      display: inline-flex;
+      margin: 3px 0 8px;
+      padding: 9px 13px;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #655b50;
+      background: #f8f3eb;
+      font-size: 13px;
+    }
+
+    .selected-look::before {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      content: "";
+    }
 
     main { padding-top: 40px; }
 
@@ -398,14 +418,14 @@
   <div class="page">
     <header>
       <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span> little moments</div>
-      <a class="home-link" href="./">← Home</a>
+      <a class="home-link" href="films.html">← Change film</a>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">Choose your favorite film</p>
-        <h1 id="page-title">Pick your look.</h1>
-        <p>Choose a little mood, then make four lovely memories.</p>
+        <p class="eyebrow">Your photo booth</p>
+        <h1 id="page-title">Strike a pose.</h1>
+        <p>Your chosen film is ready. Get together and make four little memories.</p>
       </section>
 
       <section class="booth" aria-label="Photo booth">
@@ -424,23 +444,9 @@
         </div>
 
         <aside class="controls">
-          <h2>Set the scene</h2>
-          <p class="helper">Choose your film look, then take four quick photos. Your strip will be ready to save.</p>
-
-          <label class="control-label" for="filter">Film look</label>
-          <select id="filter">
-            <option value="color">Sunday color</option>
-            <option value="portra">Portra glow</option>
-            <option value="golden">Golden hour</option>
-            <option value="vintage">Soft vintage</option>
-            <option value="faded">Faded memories</option>
-            <option value="dream">Dreamy pastel</option>
-            <option value="rose">Rose-tinted</option>
-            <option value="disposable">Disposable flash</option>
-            <option value="cinema">Indie cinema</option>
-            <option value="mono">Classic black &amp; white</option>
-            <option value="noir">Midnight noir</option>
-          </select>
+          <h2>Ready, when you are</h2>
+          <p class="helper">Your film is applied to the live preview and every picture in your photo strip.</p>
+          <div class="selected-look" id="selectedLook" aria-live="polite"></div>
 
           <div class="shots" aria-label="Photo progress">
             <span class="shot" id="shot1">1</span>
@@ -478,7 +484,22 @@
       const countdown = document.getElementById("countdown");
       const flash = document.getElementById("flash");
       const status = document.getElementById("status");
-      const filter = document.getElementById("filter");
+      const filmLooks = {
+        color: { name: "Sunday color", filter: "saturate(1.05)" },
+        portra: { name: "Portra glow", filter: "sepia(.12) saturate(1.28) contrast(.94) brightness(1.04)" },
+        golden: { name: "Golden hour", filter: "sepia(.34) saturate(1.25) brightness(1.04)" },
+        vintage: { name: "Soft vintage", filter: "sepia(.2) saturate(.82) brightness(1.06) contrast(.9)" },
+        faded: { name: "Faded memories", filter: "sepia(.12) saturate(.72) brightness(1.1) contrast(.82)" },
+        dream: { name: "Dreamy pastel", filter: "saturate(.78) brightness(1.1) contrast(.88)" },
+        rose: { name: "Rose-tinted", filter: "sepia(.18) hue-rotate(320deg) saturate(1.18) brightness(1.03)" },
+        disposable: { name: "Disposable flash", filter: "contrast(1.16) saturate(1.38) sepia(.08)" },
+        cinema: { name: "Indie cinema", filter: "contrast(1.22) saturate(.78) brightness(.96)" },
+        mono: { name: "Classic black & white", filter: "grayscale(1) contrast(1.05)" },
+        noir: { name: "Midnight noir", filter: "grayscale(1) contrast(1.42) brightness(.88)" }
+      };
+      const requestedFilm = new URLSearchParams(window.location.search).get("film");
+      const selectedFilm = Object.prototype.hasOwnProperty.call(filmLooks, requestedFilm) ? requestedFilm : "color";
+      const selectedLook = document.getElementById("selectedLook");
       const result = document.getElementById("result");
       const strip = document.getElementById("strip");
       const stripContext = strip.getContext("2d");
@@ -501,24 +522,7 @@
       }
 
       function activeFilter() {
-        const looks = {
-          color: "saturate(1.05)",
-          portra: "sepia(.12) saturate(1.28) contrast(.94) brightness(1.04)",
-          golden: "sepia(.34) saturate(1.25) brightness(1.04)",
-          vintage: "sepia(.2) saturate(.82) brightness(1.06) contrast(.9)",
-          faded: "sepia(.12) saturate(.72) brightness(1.1) contrast(.82)",
-          dream: "saturate(.78) brightness(1.1) contrast(.88)",
-          rose: "sepia(.18) hue-rotate(320deg) saturate(1.18) brightness(1.03)",
-          disposable: "contrast(1.16) saturate(1.38) sepia(.08)",
-          cinema: "contrast(1.22) saturate(.78) brightness(.96)",
-          mono: "grayscale(1) contrast(1.05)",
-          noir: "grayscale(1) contrast(1.42) brightness(.88)"
-        };
-        return looks[filter.value] || looks.color;
-      }
-
-      function syncFilmLook() {
-        cameraFrame.style.setProperty("--film-filter", activeFilter());
+        return filmLooks[selectedFilm].filter;
       }
 
       function syncCameraOrientation() {
@@ -526,6 +530,9 @@
           && video.videoWidth > video.videoHeight;
         cameraFrame.classList.toggle("rotate-for-portrait", rotateForPortrait);
       }
+
+      selectedLook.textContent = filmLooks[selectedFilm].name;
+      cameraFrame.style.setProperty("--film-filter", activeFilter());
 
       async function startCamera() {
         if (stream) return;
@@ -644,7 +651,7 @@
         strip.width = width;
         strip.height = padding * 2 + headerHeight + imageHeight * 4 + gap * 3 + footerHeight;
 
-        stripContext.fillStyle = ["mono", "noir"].includes(filter.value) ? "#f2f0eb" : "#fffaf1";
+        stripContext.fillStyle = ["mono", "noir"].includes(selectedFilm) ? "#f2f0eb" : "#fffaf1";
         stripContext.fillRect(0, 0, strip.width, strip.height);
 
         stripContext.fillStyle = "#766b5d";
@@ -654,7 +661,7 @@
         stripContext.fillStyle = "#a29686";
         stripContext.font = "12px Segoe UI, sans-serif";
         stripContext.letterSpacing = "3px";
-        stripContext.fillText("PHOTO BOOTH  •  EST. TODAY", width / 2, 99);
+        stripContext.fillText(filmLooks[selectedFilm].name.toUpperCase(), width / 2, 99);
         stripContext.letterSpacing = "0";
 
         photos.forEach((photo, index) => {
@@ -706,7 +713,6 @@
 
       startButton.addEventListener("click", startCamera);
       captureButton.addEventListener("click", capturePhotos);
-      filter.addEventListener("change", syncFilmLook);
       document.getElementById("retakeButton").addEventListener("click", resetSession);
       document.getElementById("downloadButton").addEventListener("click", () => {
         if (!strip.width || !strip.height) {
@@ -727,10 +733,6 @@
           link.remove();
           URL.revokeObjectURL(url);
         }, "image/png");
-      });
-
-      filter.addEventListener("change", () => {
-        if (photos.length === 4) renderStrip();
       });
 
       video.addEventListener("loadedmetadata", syncCameraOrientation);

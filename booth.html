@@ -361,6 +361,31 @@
     .result h2 { margin: 0 0 5px; font: 24px Georgia, serif; }
     .result p { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
 
+    .retake-heading { margin: 23px 0 4px; font: 20px Georgia, serif; }
+    .retake-help { margin-bottom: 13px !important; }
+    .photo-retakes {
+      display: grid;
+      grid-template-columns: repeat(var(--side, 2), minmax(0, 1fr));
+      max-width: 520px;
+      margin: 0 auto 20px;
+      gap: 7px;
+    }
+
+    .photo-retake {
+      min-width: 0;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: #655b50;
+      background: white;
+      font-size: 11px;
+    }
+
+    .photo-retake:hover:not(:disabled) { border-color: var(--accent); background: #fffaf5; }
+    .photo-retake:focus-visible { outline: 3px solid #e8ab98; outline-offset: 2px; }
+    .photo-retake canvas { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+    .photo-retake span { display: block; padding: 4px 0 1px; }
+
     #strip {
       display: block;
       width: min(100%, 520px);
@@ -462,6 +487,9 @@
         <h2 id="result-title">Your photos are ready</h2>
         <p id="resultDescription">Download your finished photo layout to keep it.</p>
         <canvas id="strip" aria-label="Your finished photo layout"></canvas>
+        <h3 class="retake-heading">Want to redo one?</h3>
+        <p class="retake-help">Tap a photo to retake just that picture.</p>
+        <div class="photo-retakes" id="photoRetakes" role="group" aria-label="Retake an individual photo"></div>
         <div class="result-actions">
           <button class="primary" id="downloadButton" type="button">Download photo layout</button>
           <button class="secondary" id="retakeButton" type="button">Remake photos</button>
@@ -513,9 +541,11 @@
       const stripContext = strip.getContext("2d");
       const resultTitle = document.getElementById("result-title");
       const resultDescription = document.getElementById("resultDescription");
+      const photoRetakes = document.getElementById("photoRetakes");
       const layoutIntro = document.getElementById("layoutIntro");
       const downloadButton = document.getElementById("downloadButton");
       const changeFilmLink = document.getElementById("changeFilmLink");
+      const remakeButton = document.getElementById("retakeButton");
       const photos = [];
       let stream = null;
       let capturing = false;
@@ -628,7 +658,7 @@
       }
 
       async function countDown() {
-        for (let number = 3; number > 0; number -= 1) {
+        for (let number = 5; number > 0; number -= 1) {
           if (cancelled) return false;
           countdown.textContent = number;
           countdown.classList.add("visible");
@@ -644,6 +674,7 @@
         cancelled = false;
         photos.length = 0;
         updateProgress();
+        photoRetakes.replaceChildren();
         result.classList.remove("visible");
         captureButton.disabled = true;
         startButton.disabled = false;
@@ -667,6 +698,7 @@
           }
           if (photos.length === selectedLayout.count) {
             renderStrip();
+            renderPhotoRetakes();
             result.classList.add("visible");
             setStatus("Your photo layout is ready to download!");
             result.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -737,7 +769,7 @@
         });
       }
 
-      function drawPhotoCover(photo, x, y, width, height) {
+      function drawPhotoCover(photo, x, y, width, height, context = stripContext) {
         const targetRatio = width / height;
         const sourceRatio = photo.width / photo.height;
         let sx = 0;
@@ -751,10 +783,71 @@
           sh = photo.width / targetRatio;
           sy = (photo.height - sh) / 2;
         }
-        stripContext.save();
-        stripContext.filter = activeFilter();
-        stripContext.drawImage(photo, sx, sy, sw, sh, x, y, width, height);
-        stripContext.restore();
+        context.save();
+        context.filter = activeFilter();
+        context.drawImage(photo, sx, sy, sw, sh, x, y, width, height);
+        context.restore();
+      }
+
+      function renderPhotoRetakes() {
+        photoRetakes.style.setProperty("--side", selectedLayout.side);
+        photoRetakes.replaceChildren(...photos.map((photo, index) => {
+          const button = document.createElement("button");
+          button.className = "photo-retake";
+          button.type = "button";
+          button.setAttribute("aria-label", `Retake photo ${index + 1}`);
+          button.title = `Retake photo ${index + 1}`;
+
+          const thumbnail = document.createElement("canvas");
+          thumbnail.width = 96;
+          thumbnail.height = 96;
+          const context = thumbnail.getContext("2d");
+          context.fillStyle = "#fff";
+          context.fillRect(0, 0, thumbnail.width, thumbnail.height);
+          drawPhotoCover(photo, 3, 3, 90, 90, context);
+
+          const label = document.createElement("span");
+          label.textContent = `Retake ${index + 1}`;
+          button.append(thumbnail, label);
+          button.addEventListener("click", () => retakePhoto(index));
+          return button;
+        }));
+      }
+
+      async function retakePhoto(index) {
+        if (!stream || capturing || !photos[index]) return;
+        capturing = true;
+        cancelled = false;
+        captureButton.disabled = true;
+        remakeButton.disabled = true;
+        downloadButton.disabled = true;
+        startButton.disabled = false;
+        startButton.textContent = "Cancel photo session";
+        [...photoRetakes.querySelectorAll("button")].forEach((button) => {
+          button.disabled = true;
+        });
+
+        try {
+          setStatus(`Get ready to retake photo ${index + 1} of ${selectedLayout.count}…`);
+          if (await countDown()) {
+            photos[index] = takeSnapshot();
+            renderStrip();
+            renderPhotoRetakes();
+            setStatus(`Photo ${index + 1} replaced. Your updated layout is ready.`);
+          } else {
+            setStatus(`Retaking photo ${index + 1} was cancelled. Your original photo is unchanged.`);
+          }
+        } catch (error) {
+          setStatus(`Could not retake photo ${index + 1}: ${error.message || "unknown error"}`, true);
+        } finally {
+          capturing = false;
+          countdown.classList.remove("visible");
+          captureButton.disabled = !stream;
+          remakeButton.disabled = false;
+          downloadButton.disabled = false;
+          startButton.disabled = Boolean(stream);
+          if (stream) startButton.textContent = "Camera is ready";
+        }
       }
 
       function resetSession() {
@@ -764,6 +857,7 @@
         }
         photos.length = 0;
         updateProgress();
+        photoRetakes.replaceChildren();
         result.classList.remove("visible");
         stripContext.clearRect(0, 0, strip.width, strip.height);
         setStatus(`Camera ready! Find your pose for ${selectedLayout.count} photo${selectedLayout.count === 1 ? "" : "s"}.`);
@@ -774,8 +868,8 @@
 
       startButton.addEventListener("click", startCamera);
       captureButton.addEventListener("click", capturePhotos);
-      document.getElementById("retakeButton").addEventListener("click", resetSession);
-      document.getElementById("downloadButton").addEventListener("click", () => {
+      remakeButton.addEventListener("click", resetSession);
+      downloadButton.addEventListener("click", () => {
         if (!strip.width || !strip.height) {
           setStatus("Take your photos before downloading the layout.", true);
           return;

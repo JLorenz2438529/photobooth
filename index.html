@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f0e7">
+  <title>Little Moments — Photo Booth</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f6f0e7;
+      --ink: #29251f;
+      --muted: #82796e;
+      --accent: #c65e43;
+      --line: #e4dbcf;
+      --card: #fffdf9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 10% 12%, rgba(226, 198, 155, .22), transparent 30rem),
+        var(--paper);
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+
+    html { -webkit-text-size-adjust: 100%; }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .page {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--accent);
+      font: 18px Georgia, serif;
+    }
+
+    .header-note {
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: .04em;
+    }
+
+    main { padding-top: 40px; }
+
+    .intro { margin-bottom: 30px; text-align: center; }
+
+    .eyebrow {
+      margin: 0 0 9px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font: 500 clamp(36px, 6vw, 58px)/1.08 Georgia, "Times New Roman", serif;
+      letter-spacing: -1.7px;
+    }
+
+    .intro p:last-child {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .booth {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr);
+      overflow: hidden;
+      min-height: 510px;
+      border: 1px solid #e8dfd3;
+      border-radius: 18px;
+      background: var(--card);
+      box-shadow: 0 20px 60px rgba(67, 51, 35, .08);
+    }
+
+    .studio {
+      position: relative;
+      display: grid;
+      min-height: 510px;
+      padding: 24px;
+      place-items: center;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(245, 220, 183, .6), transparent 45%),
+        #eee6da;
+    }
+
+    .camera-frame {
+      position: relative;
+      display: grid;
+      width: min(100%, 620px);
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      place-items: center;
+      border: 8px solid rgba(255,255,255,.82);
+      border-radius: 10px;
+      background: #d7cdbf;
+      box-shadow: 0 10px 30px rgba(46, 37, 29, .15);
+    }
+
+    video {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .camera-frame.is-live video { display: block; }
+
+    .camera-frame.rotate-for-portrait video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 133.333%;
+      height: 75%;
+      max-width: none;
+      transform: translate(-50%, -50%) rotate(90deg) scaleX(-1);
+    }
+
+    .placeholder {
+      display: flex;
+      max-width: 280px;
+      padding: 20px;
+      align-items: center;
+      flex-direction: column;
+      color: #756a5d;
+      text-align: center;
+    }
+
+    .camera-icon { margin-bottom: 13px; font-size: 38px; }
+    .placeholder strong { color: #51483d; font: 22px Georgia, serif; }
+    .placeholder span { margin-top: 7px; font-size: 13px; line-height: 1.55; }
+    .is-live .placeholder { display: none; }
+
+    .countdown {
+      position: absolute;
+      z-index: 2;
+      display: none;
+      width: 104px;
+      height: 104px;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid rgba(255,255,255,.9);
+      border-radius: 50%;
+      color: white;
+      background: rgba(31, 26, 22, .42);
+      font: 64px Georgia, serif;
+      text-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+
+    .countdown.visible { display: flex; }
+
+    .flash {
+      position: absolute;
+      z-index: 3;
+      inset: 0;
+      pointer-events: none;
+      background: white;
+      opacity: 0;
+    }
+
+    .flash.fire { animation: flash .28s ease-out; }
+    @keyframes flash { 0% { opacity: .95; } 100% { opacity: 0; } }
+
+    .studio-caption {
+      position: absolute;
+      right: 24px;
+      bottom: 17px;
+      left: 24px;
+      display: flex;
+      justify-content: space-between;
+      color: #786e62;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      padding: 30px 27px 24px;
+      flex-direction: column;
+    }
+
+    .controls h2 {
+      margin: 0;
+      font: 25px Georgia, "Times New Roman", serif;
+    }
+
+    .helper {
+      margin: 8px 0 23px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .control-label {
+      margin: 0 0 8px;
+      color: #6f665b;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: white;
+      outline-color: var(--accent);
+    }
+
+    .shots {
+      display: flex;
+      margin: 22px 0 23px;
+      gap: 9px;
+    }
+
+    .shot {
+      display: grid;
+      width: 34px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid #e4dbcf;
+      border-radius: 5px;
+      color: #a79d91;
+      background: #f8f4ee;
+      font-size: 12px;
+      transition: .2s ease;
+    }
+
+    .shot.done {
+      border-color: #d9a28f;
+      color: white;
+      background: var(--accent);
+    }
+
+    .status {
+      min-height: 38px;
+      margin: 0 0 13px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .status.error { color: #a33b2a; }
+
+    .primary, .secondary {
+      display: block;
+      width: 100%;
+      min-height: 48px;
+      padding: 13px 16px;
+      border: 0;
+      border-radius: 8px;
+      font-weight: 650;
+      transition: transform .15s ease, background .15s ease, opacity .15s ease;
+    }
+
+    .primary {
+      color: white;
+      background: var(--accent);
+      box-shadow: 0 5px 13px rgba(198, 94, 67, .2);
+    }
+
+    .primary:hover:not(:disabled) { transform: translateY(-1px); background: #af5038; }
+    .secondary { margin-top: 9px; color: #51483d; background: #f1ebe2; }
+    .secondary:hover:not(:disabled) { background: #e8dfd3; }
+    button:disabled { cursor: not-allowed; opacity: .5; }
+
+    .fine-print {
+      margin: auto 0 0;
+      padding-top: 23px;
+      color: #948a7e;
+      font-size: 11px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .result {
+      display: none;
+      margin: 27px auto 0;
+      padding: 23px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,253,249,.8);
+      text-align: center;
+    }
+
+    .result.visible { display: block; }
+    .result h2 { margin: 0 0 5px; font: 24px Georgia, serif; }
+    .result p { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+
+    #strip {
+      display: block;
+      width: min(100%, 280px);
+      height: auto;
+      margin: 0 auto 18px;
+      border: 1px solid #e5ddd2;
+      box-shadow: 0 8px 24px rgba(45, 37, 28, .12);
+    }
+
+    .result-actions {
+      display: flex;
+      max-width: 420px;
+      margin: auto;
+      gap: 10px;
+    }
+
+    .result-actions > * { flex: 1; }
+    footer { padding-top: 25px; color: #978d81; font-size: 11px; text-align: center; }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 24px, 560px);
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(42px, env(safe-area-inset-bottom));
+      }
+      .header-note { display: none; }
+      main { padding-top: 28px; }
+      .intro { margin-bottom: 22px; }
+      .booth { grid-template-columns: 1fr; }
+      .studio { min-height: auto; padding: 17px 14px 43px; }
+      .camera-frame {
+        width: min(100%, 400px);
+        aspect-ratio: 3 / 4;
+      }
+      .studio-caption { right: 14px; bottom: 14px; left: 14px; }
+      .controls { padding: 23px 20px; }
+      .fine-print { margin-top: 22px; }
+      select { font-size: 16px; }
+    }
+
+    @media (max-width: 420px) {
+      .result { padding: 19px 15px; }
+      .result-actions { flex-direction: column; }
+      .result-actions .secondary { margin-top: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span> little moments</div>
+      <div class="header-note">A tiny photo booth for your favorite people</div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">The at-home photo booth</p>
+        <h1 id="page-title">Make a little memory.</h1>
+        <p>Get together, strike a pose, and let the good times roll.</p>
+      </section>
+
+      <section class="booth" aria-label="Photo booth">
+        <div class="studio">
+          <div class="camera-frame" id="cameraFrame">
+            <video id="video" autoplay muted playsinline aria-label="Live camera preview"></video>
+            <div class="placeholder">
+              <div class="camera-icon" aria-hidden="true">📷</div>
+              <strong>Your moment starts here</strong>
+              <span>Allow camera access to see yourself in the booth.</span>
+            </div>
+            <div class="countdown" id="countdown" aria-live="assertive"></div>
+            <div class="flash" id="flash"></div>
+          </div>
+          <div class="studio-caption"><span>Little Moments Photo Co.</span><span>✳ Est. today</span></div>
+        </div>
+
+        <aside class="controls">
+          <h2>Set the scene</h2>
+          <p class="helper">Choose your film look, then take four quick photos. Your strip will be ready to save.</p>
+
+          <label class="control-label" for="filter">Film look</label>
+          <select id="filter">
+            <option value="color">Sunday color</option>
+            <option value="warm">Golden hour</option>
+            <option value="mono">Classic black &amp; white</option>
+          </select>
+
+          <div class="shots" aria-label="Photo progress">
+            <span class="shot" id="shot1">1</span>
+            <span class="shot" id="shot2">2</span>
+            <span class="shot" id="shot3">3</span>
+            <span class="shot" id="shot4">4</span>
+          </div>
+
+          <p class="status" id="status" role="status">Ready when you are. Camera access stays on your device.</p>
+          <button class="primary" id="startButton" type="button">Start the booth</button>
+          <button class="secondary" id="captureButton" type="button" disabled>Take my photos</button>
+          <p class="fine-print">Photos stay on your device. Phone cameras require a secure HTTPS connection.</p>
+        </aside>
+      </section>
+
+      <section class="result" id="result" aria-labelledby="result-title">
+        <h2 id="result-title">A little strip of joy</h2>
+        <p>Your photos are ready. Download the strip to keep it.</p>
+        <canvas id="strip" aria-label="Your finished four-photo strip"></canvas>
+        <div class="result-actions">
+          <button class="primary" id="downloadButton" type="button">Download photo strip</button>
+          <button class="secondary" id="retakeButton" type="button">Take another</button>
+        </div>
+      </section>
+    </main>
+    <footer>Made for the moments you want to keep.</footer>
+  </div>
+
+  <script>
+    (() => {
+      const video = document.getElementById("video");
+      const cameraFrame = document.getElementById("cameraFrame");
+      const startButton = document.getElementById("startButton");
+      const captureButton = document.getElementById("captureButton");
+      const countdown = document.getElementById("countdown");
+      const flash = document.getElementById("flash");
+      const status = document.getElementById("status");
+      const filter = document.getElementById("filter");
+      const result = document.getElementById("result");
+      const strip = document.getElementById("strip");
+      const stripContext = strip.getContext("2d");
+      const photos = [];
+      let stream = null;
+      let capturing = false;
+      let cancelled = false;
+
+      const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+      function setStatus(message, isError = false) {
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+      }
+
+      function updateProgress() {
+        for (let index = 0; index < 4; index += 1) {
+          document.getElementById(`shot${index + 1}`).classList.toggle("done", index < photos.length);
+        }
+      }
+
+      function activeFilter() {
+        if (filter.value === "mono") return "grayscale(1) contrast(1.05)";
+        if (filter.value === "warm") return "sepia(.32) saturate(1.18)";
+        return "saturate(1.05)";
+      }
+
+      function syncCameraOrientation() {
+        const rotateForPortrait = window.matchMedia("(max-width: 760px)").matches
+          && video.videoWidth > video.videoHeight;
+        cameraFrame.classList.toggle("rotate-for-portrait", rotateForPortrait);
+      }
+
+      async function startCamera() {
+        if (stream) return;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setStatus("Camera access is not available here. Open this page in a modern browser over HTTPS or localhost.", true);
+          return;
+        }
+
+        startButton.disabled = true;
+        setStatus("Waiting for camera permission…");
+        try {
+          const isPhoneLayout = window.matchMedia("(max-width: 760px)").matches;
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+              facingMode: { ideal: "user" },
+              width: { ideal: isPhoneLayout ? 720 : 1280 },
+              height: { ideal: isPhoneLayout ? 1280 : 960 }
+            }
+          });
+          video.srcObject = stream;
+          await video.play();
+          syncCameraOrientation();
+          cameraFrame.classList.add("is-live");
+          captureButton.disabled = false;
+          startButton.textContent = "Camera is ready";
+          setStatus("Camera ready! Find your pose and take four photos.");
+        } catch (error) {
+          startButton.disabled = false;
+          const messages = {
+            NotAllowedError: "Camera permission was denied. Allow camera access in your browser settings, then try again.",
+            NotFoundError: "No camera was found. Connect a camera and try again.",
+            NotReadableError: "Your camera is in use by another app. Close that app and try again."
+          };
+          setStatus(messages[error.name] || `Could not start the camera: ${error.message || "unknown error"}`, true);
+        }
+      }
+
+      function takeSnapshot() {
+        const canvas = document.createElement("canvas");
+        const rotateForPortrait = cameraFrame.classList.contains("rotate-for-portrait");
+        canvas.width = rotateForPortrait ? video.videoHeight : video.videoWidth;
+        canvas.height = rotateForPortrait ? video.videoWidth : video.videoHeight;
+        const context = canvas.getContext("2d");
+        if (rotateForPortrait) {
+          context.transform(0, 1, 1, 0, 0, 0);
+        } else {
+          context.translate(canvas.width, 0);
+          context.scale(-1, 1);
+        }
+        context.drawImage(video, 0, 0);
+        return canvas;
+      }
+
+      async function countDown() {
+        for (let number = 3; number > 0; number -= 1) {
+          if (cancelled) return false;
+          countdown.textContent = number;
+          countdown.classList.add("visible");
+          await wait(1000);
+        }
+        countdown.classList.remove("visible");
+        return !cancelled;
+      }
+
+      async function capturePhotos() {
+        if (!stream || capturing) return;
+        capturing = true;
+        cancelled = false;
+        photos.length = 0;
+        updateProgress();
+        result.classList.remove("visible");
+        captureButton.disabled = true;
+        startButton.disabled = true;
+
+        try {
+          for (let index = 0; index < 4; index += 1) {
+            setStatus(`Get ready… photo ${index + 1} of 4`);
+            if (!await countDown()) break;
+            photos.push(takeSnapshot());
+            updateProgress();
+            flash.classList.remove("fire");
+            void flash.offsetWidth;
+            flash.classList.add("fire");
+            setStatus(index < 3 ? `Lovely! ${3 - index} ${3 - index === 1 ? "photo" : "photos"} to go.` : "All four! Putting your strip together…");
+            await wait(850);
+            if (cancelled) break;
+          }
+          if (photos.length === 4) {
+            renderStrip();
+            result.classList.add("visible");
+            setStatus("Your photo strip is ready to download!");
+            result.scrollIntoView({ behavior: "smooth", block: "center" });
+          } else {
+            setStatus("Photo session stopped. Press “Take my photos” when you’re ready.");
+          }
+        } catch (error) {
+          setStatus(`Could not create the photo strip: ${error.message || "unknown error"}`, true);
+        } finally {
+          capturing = false;
+          countdown.classList.remove("visible");
+          captureButton.disabled = !stream;
+          startButton.disabled = Boolean(stream);
+        }
+      }
+
+      function renderStrip() {
+        const width = 720;
+        const padding = 28;
+        const imageHeight = photos.length
+          ? Math.round((width - padding * 2) / (photos[0].width / photos[0].height))
+          : 440;
+        const gap = 18;
+        const headerHeight = 115;
+        const footerHeight = 105;
+        strip.width = width;
+        strip.height = padding * 2 + headerHeight + imageHeight * 4 + gap * 3 + footerHeight;
+
+        stripContext.fillStyle = filter.value === "mono" ? "#f2f0eb" : "#fffaf1";
+        stripContext.fillRect(0, 0, strip.width, strip.height);
+
+        stripContext.fillStyle = "#766b5d";
+        stripContext.textAlign = "center";
+        stripContext.font = "italic 30px Georgia, serif";
+        stripContext.fillText("little moments", width / 2, 69);
+        stripContext.fillStyle = "#a29686";
+        stripContext.font = "12px Segoe UI, sans-serif";
+        stripContext.letterSpacing = "3px";
+        stripContext.fillText("PHOTO BOOTH  •  EST. TODAY", width / 2, 99);
+        stripContext.letterSpacing = "0";
+
+        photos.forEach((photo, index) => {
+          const y = padding + headerHeight + index * (imageHeight + gap);
+          stripContext.save();
+          stripContext.shadowColor = "rgba(54, 43, 31, .12)";
+          stripContext.shadowBlur = 12;
+          stripContext.shadowOffsetY = 3;
+          stripContext.fillStyle = "#fff";
+          stripContext.fillRect(padding, y, width - padding * 2, imageHeight);
+          stripContext.restore();
+
+          const sourceRatio = photo.width / photo.height;
+          const targetRatio = (width - padding * 2) / imageHeight;
+          let sx = 0;
+          let sy = 0;
+          let sw = photo.width;
+          let sh = photo.height;
+          if (sourceRatio > targetRatio) {
+            sw = photo.height * targetRatio;
+            sx = (photo.width - sw) / 2;
+          } else {
+            sh = photo.width / targetRatio;
+            sy = (photo.height - sh) / 2;
+          }
+          stripContext.save();
+          stripContext.filter = activeFilter();
+          stripContext.drawImage(photo, sx, sy, sw, sh, padding, y, width - padding * 2, imageHeight);
+          stripContext.restore();
+        });
+
+        stripContext.fillStyle = "#9c8d79";
+        stripContext.textAlign = "center";
+        stripContext.font = "italic 18px Georgia, serif";
+        stripContext.fillText("keep the good times close ✳", width / 2, strip.height - 42);
+      }
+
+      function resetSession() {
+        if (capturing) {
+          cancelled = true;
+          return;
+        }
+        photos.length = 0;
+        updateProgress();
+        result.classList.remove("visible");
+        setStatus("Camera ready! Find your pose and take four photos.");
+        captureButton.disabled = !stream;
+      }
+
+      startButton.addEventListener("click", startCamera);
+      captureButton.addEventListener("click", capturePhotos);
+      document.getElementById("retakeButton").addEventListener("click", resetSession);
+      document.getElementById("downloadButton").addEventListener("click", () => {
+        if (!strip.width || !strip.height) {
+          setStatus("Take your photos before downloading a strip.", true);
+          return;
+        }
+        strip.toBlob((blob) => {
+          if (!blob) {
+            setStatus("Your browser could not create the download. Please try again.", true);
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "little-moments-photo-strip.png";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      });
+
+      filter.addEventListener("change", () => {
+        if (photos.length === 4) renderStrip();
+      });
+
+      video.addEventListener("loadedmetadata", syncCameraOrientation);
+      video.addEventListener("resize", syncCameraOrientation);
+      window.addEventListener("resize", syncCameraOrientation);
+
+      window.addEventListener("pagehide", () => {
+        if (stream) stream.getTracks().forEach((track) => track.stop());
+      });
+    })();
+  </script>
+</body>
+</html>

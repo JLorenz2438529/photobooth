@@ -166,6 +166,105 @@
     .layout-name { font-size: 12px; font-weight: 650; text-align: center; }
     .layout-count { color: var(--muted); font-size: 10px; }
 
+    .frame-section { margin: 0 0 29px; }
+    .frame-heading { margin: 0 0 5px; font: 22px Georgia, "Times New Roman", serif; }
+    .frame-copy { margin: 0 0 13px; color: var(--muted); font-size: 12px; }
+    .frame-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .frame-option {
+      display: flex;
+      min-width: 0;
+      padding: 10px 8px;
+      align-items: center;
+      flex-direction: column;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: #655b50;
+      background: rgba(255,253,249,.78);
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease, transform .15s ease;
+    }
+    .frame-option:hover { transform: translateY(-2px); border-color: #d7b8a7; }
+    .frame-option[aria-pressed="true"] {
+      border-color: var(--accent);
+      color: var(--ink);
+      background: #fffaf5;
+      box-shadow: 0 0 0 2px rgba(198, 94, 67, .1);
+    }
+    .frame-option:focus-visible { outline: 3px solid #e8ab98; outline-offset: 2px; }
+    .frame-preview {
+      position: relative;
+      display: flex;
+      width: 52px;
+      height: 82px;
+      padding: 5px 7px;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 3px;
+      overflow: hidden;
+      border: 1px solid var(--frame-edge, #ded8ce);
+      border-radius: 3px;
+      background: var(--frame-paper, #f8f6f1);
+      box-shadow: 0 2px 6px rgba(38,31,24,.12);
+    }
+    .frame-window {
+      z-index: 1;
+      flex: 1;
+      min-height: 0;
+      border: 2px solid var(--frame-mat, #fffdf8);
+      background: #100f0e;
+    }
+    .frame-preview[data-frame="midnight"] { --frame-paper: #090909; --frame-edge: #090909; --frame-mat: #f7f4ee; }
+    .frame-preview[data-frame="blush"] { --frame-paper: #f4d8d5; --frame-edge: #d5aaa6; --frame-mat: #fdf2eb; }
+    .frame-preview[data-frame="negative"] { --frame-paper: #211d1a; --frame-edge: #211d1a; --frame-mat: #f8f4ec; }
+    .frame-preview[data-frame="clear"] {
+      --frame-paper: #e8e8e6;
+      --frame-edge: #c9c9c6;
+      --frame-mat: #f7f7f5;
+      background-image: repeating-conic-gradient(#d5d5d2 0% 25%, #f0f0ee 0% 50%);
+      background-size: 7px 7px;
+    }
+    .frame-preview[data-frame="party"] { --frame-paper: #fffdf8; --frame-edge: #ded8ce; --frame-mat: #fffdf8; }
+    .frame-preview[data-frame="olive"] { --frame-paper: #d8d4b8; --frame-edge: #aaa785; --frame-mat: #f2eedf; }
+    .frame-preview[data-frame="double"] {
+      width: 66px;
+      padding-right: 3px;
+      padding-left: 3px;
+      flex-direction: row;
+      gap: 3px;
+    }
+    .frame-preview[data-frame="double"] .frame-window { border-width: 1px; }
+    .frame-preview[data-frame="silver"] { --frame-paper: #dedede; --frame-edge: #bebebe; --frame-mat: #f8f8f8; }
+    .frame-preview[data-frame="retro"] { --frame-paper: #171411; --frame-edge: #171411; --frame-mat: #e6d9bb; }
+    .frame-preview[data-frame="retro"] .frame-window { background: #25211d; }
+    .frame-preview[data-frame="party"]::before,
+    .frame-preview[data-frame="blush"]::before {
+      position: absolute;
+      z-index: 2;
+      top: 3px;
+      right: 4px;
+      color: var(--accent);
+      content: "✿";
+      font: 12px Georgia, serif;
+    }
+    .frame-preview[data-frame="negative"]::before,
+    .frame-preview[data-frame="clear"]::before,
+    .frame-preview[data-frame="retro"]::before {
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      bottom: 0;
+      left: 1px;
+      width: 4px;
+      background: radial-gradient(ellipse at center, var(--frame-mat) 0 1px, transparent 1.5px) 0 3px / 4px 10px repeat-y;
+      content: "";
+    }
+    .frame-name { font-size: 11px; font-weight: 650; line-height: 1.25; text-align: center; }
+
     .film-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -274,8 +373,10 @@
     @media (max-width: 760px) {
       .page { width: min(100% - 24px, 600px); padding-top: max(16px, env(safe-area-inset-top)); }
       main { padding-top: 29px; }
+      .step-note { width: min(100%, 520px); flex-wrap: wrap; justify-content: center; border-radius: 12px; }
       .layout-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
       .layout-option { min-height: 92px; }
+      .frame-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
       .film-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
       .film-card { padding: 8px; }
       .film-art { border-width: 4px; }
@@ -284,6 +385,7 @@
     }
     @media (max-width: 350px) {
       .layout-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .frame-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .film-grid { grid-template-columns: 1fr; }
       .film-art { aspect-ratio: 1.8; }
     }
@@ -301,12 +403,12 @@
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">Step one · Pick your film</p>
+        <p class="eyebrow">Make it yours</p>
         <h1 id="page-title">Find your film mood.</h1>
-        <p class="intro-copy">Choose your layout and a film look, then open the camera.</p>
+        <p class="intro-copy">Choose a photo layout, a film-strip design, and a color look.</p>
       </section>
 
-      <div class="step-note"><span class="step-number">1</span> Pick a layout <span aria-hidden="true">→</span> <span class="step-number">2</span> Choose a film <span aria-hidden="true">→</span> <span class="step-number">3</span> Take your photos</div>
+      <div class="step-note"><span class="step-number">1</span> Pick a layout <span aria-hidden="true">→</span> <span class="step-number">2</span> Pick a frame <span aria-hidden="true">→</span> <span class="step-number">3</span> Choose a film <span aria-hidden="true">→</span> <span class="step-number">4</span> Take your photos</div>
 
       <section class="layout-section" aria-labelledby="layout-heading">
         <h2 class="layout-heading" id="layout-heading">Choose your photo layout</h2>
@@ -335,6 +437,53 @@
             <span class="layout-preview" data-side="6" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
             <span class="layout-name">Grid 6×6</span>
             <span class="layout-count">36 photos</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="frame-section" aria-labelledby="frame-heading">
+        <h2 class="frame-heading" id="frame-heading">Choose your film strip</h2>
+        <p class="frame-copy">Pick the frame and border style for your finished photos.</p>
+        <div class="frame-grid" role="group" aria-label="Film strip design">
+          <button class="frame-option" type="button" data-frame="classic" aria-pressed="true" aria-label="Classic ivory film strip">
+            <span class="frame-preview" data-frame="classic" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Classic ivory</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="midnight" aria-pressed="false" aria-label="Midnight black film strip">
+            <span class="frame-preview" data-frame="midnight" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Midnight</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="blush" aria-pressed="false" aria-label="Blush pink film strip">
+            <span class="frame-preview" data-frame="blush" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Blush</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="negative" aria-pressed="false" aria-label="35 millimeter negative film strip">
+            <span class="frame-preview" data-frame="negative" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">35mm negative</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="clear" aria-pressed="false" aria-label="Clear negative film strip">
+            <span class="frame-preview" data-frame="clear" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Clear negative</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="party" aria-pressed="false" aria-label="Party decorated film strip">
+            <span class="frame-preview" data-frame="party" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Party keepsake</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="olive" aria-pressed="false" aria-label="Olive classic film strip">
+            <span class="frame-preview" data-frame="olive" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Olive classic</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="double" aria-pressed="false" aria-label="Double side-by-side film strip">
+            <span class="frame-preview" data-frame="double" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Double negative</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="silver" aria-pressed="false" aria-label="Silver studio film strip">
+            <span class="frame-preview" data-frame="silver" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Silver studio</span>
+          </button>
+          <button class="frame-option" type="button" data-frame="retro" aria-pressed="false" aria-label="Retro 35 millimeter film strip">
+            <span class="frame-preview" data-frame="retro" aria-hidden="true"><span class="frame-window"></span><span class="frame-window"></span><span class="frame-window"></span></span>
+            <span class="frame-name">Retro 35mm</span>
           </button>
         </div>
       </section>
@@ -396,7 +545,7 @@
           <p class="film-caption">Deep shadows, dramatic contrast</p>
         </a>
       </section>
-      <p class="privacy-note">Your selected film will be used in the camera preview and finished photo layout. Photos stay on your device.</p>
+      <p class="privacy-note">Your chosen frame and film look will be used in the finished photo layout. Photos stay on your device.</p>
     </main>
     <footer>Made for the moments you want to keep.</footer>
   </div>
@@ -408,17 +557,25 @@
       if (!validLayouts.has(selectedLayout)) selectedLayout = "1";
 
       const layoutButtons = [...document.querySelectorAll(".layout-option")];
+      const frameButtons = [...document.querySelectorAll(".frame-option")];
       const filmCards = [...document.querySelectorAll(".film-card")];
       const homeLink = document.getElementById("homeLink");
+      const validFrames = new Set(frameButtons.map((button) => button.dataset.frame));
+      let selectedFrame = query.get("frame");
+      if (!validFrames.has(selectedFrame)) selectedFrame = "classic";
 
       function updateLayoutLinks() {
         layoutButtons.forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.layout === selectedLayout));
         });
+        frameButtons.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.frame === selectedFrame));
+        });
         filmCards.forEach((card) => {
           const target = new URL("booth.html", window.location.href);
           target.searchParams.set("film", card.dataset.film);
           target.searchParams.set("layout", selectedLayout);
+          target.searchParams.set("frame", selectedFrame);
           card.href = target.href;
         });
         homeLink.href = `./?layout=${selectedLayout}`;
@@ -428,6 +585,15 @@
         button.addEventListener("click", () => {
           selectedLayout = button.dataset.layout;
           query.set("layout", selectedLayout);
+          history.replaceState(null, "", `${window.location.pathname}?${query}`);
+          updateLayoutLinks();
+        });
+      });
+
+      frameButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedFrame = button.dataset.frame;
+          query.set("frame", selectedFrame);
           history.replaceState(null, "", `${window.location.pathname}?${query}`);
           updateLayoutLinks();
         });

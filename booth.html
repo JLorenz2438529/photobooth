@@ -469,9 +469,10 @@
 
         <aside class="controls">
           <h2>Ready, when you are</h2>
-          <p class="helper">Your chosen film and layout are ready. Both will be used in your finished photo.</p>
+          <p class="helper">Your chosen film look, strip frame, and layout are ready.</p>
           <div class="selected-look" id="selectedLook" aria-live="polite"></div>
           <div class="selected-look" id="selectedLayout" aria-live="polite"></div>
+          <div class="selected-look" id="selectedFrame" aria-live="polite"></div>
 
           <div class="shots" id="shots" aria-label="Photo progress">
           </div>
@@ -528,13 +529,28 @@
         "4": { side: 4, count: 16, label: "Grid 4×4", fileLabel: "grid-4x4" },
         "6": { side: 6, count: 36, label: "Grid 6×6", fileLabel: "grid-6x6" }
       };
+      const frameStyles = {
+        classic: { name: "Classic ivory", paper: "#f2f0eb", mat: "#fffdf8", edge: "#ded8ce", gap: 13 },
+        midnight: { name: "Midnight", paper: "#090909", mat: "#f7f4ee", edge: "#f7f4ee", gap: 12 },
+        blush: { name: "Blush", paper: "#f4d8d5", mat: "#fdf2eb", edge: "#d5aaa6", gap: 12, decoration: "blush" },
+        negative: { name: "35mm negative", paper: "#211d1a", mat: "#f8f4ec", edge: "#f8f4ec", gap: 10, rails: true },
+        clear: { name: "Clear negative", paper: "#e8e8e6", mat: "#f7f7f5", edge: "#c9c9c6", gap: 10, rails: true, clear: true },
+        party: { name: "Party keepsake", paper: "#fffdf8", mat: "#fffdf8", edge: "#e4d7cb", gap: 13, decoration: "party" },
+        olive: { name: "Olive classic", paper: "#d8d4b8", mat: "#f2eedf", edge: "#aaa785", gap: 12 },
+        double: { name: "Double negative", paper: "#e9e7e1", mat: "#fffdf8", edge: "#c9c2b9", gap: 9, doubleEdge: true },
+        silver: { name: "Silver studio", paper: "#dedede", mat: "#f8f8f8", edge: "#bebebe", gap: 11 },
+        retro: { name: "Retro 35mm", paper: "#171411", mat: "#e6d9bb", edge: "#d7c79f", gap: 10, rails: true, decoration: "retro" }
+      };
       const searchParams = new URLSearchParams(window.location.search);
       const requestedFilm = searchParams.get("film");
       const requestedLayout = searchParams.get("layout");
+      const requestedFrame = searchParams.get("frame");
       const selectedFilm = Object.prototype.hasOwnProperty.call(filmLooks, requestedFilm) ? requestedFilm : "color";
       const selectedLayout = layoutChoices[requestedLayout] || layoutChoices["1"];
+      const selectedFrame = Object.prototype.hasOwnProperty.call(frameStyles, requestedFrame) ? requestedFrame : "classic";
       const selectedLook = document.getElementById("selectedLook");
       const selectedLayoutElement = document.getElementById("selectedLayout");
+      const selectedFrameElement = document.getElementById("selectedFrame");
       const shots = document.getElementById("shots");
       const result = document.getElementById("result");
       const strip = document.getElementById("strip");
@@ -595,7 +611,8 @@
       downloadButton.textContent = `Download ${selectedLayout.count === 1 ? "Polaroid" : "photo grid"}`;
       cameraFrame.style.setProperty("--film-filter", activeFilter());
       captureButton.textContent = `Take ${selectedLayout.count === 1 ? "my photo" : `${selectedLayout.count} photos`}`;
-      changeFilmLink.href = `films.html?layout=${selectedLayout.side}`;
+      selectedFrameElement.textContent = frameStyles[selectedFrame].name;
+      changeFilmLink.href = `films.html?layout=${selectedLayout.side}&frame=${selectedFrame}`;
       updateProgress();
 
       async function startCamera() {
@@ -718,14 +735,16 @@
 
       function renderStrip() {
         const width = 900;
-        const background = ["mono", "noir"].includes(selectedFilm) ? "#f2f0eb" : "#fffaf1";
+        const frame = frameStyles[selectedFrame];
         strip.classList.toggle("polaroid", selectedLayout.side === 1);
         strip.width = width;
         strip.height = selectedLayout.side === 1 ? 1000 : width;
-        stripContext.fillStyle = background;
+        stripContext.fillStyle = frame.paper;
+        stripContext.fillRect(0, 0, strip.width, strip.height);
         if (selectedLayout.side === 1) {
-          stripContext.fillRect(0, 0, strip.width, strip.height);
-          stripContext.fillStyle = "#fff";
+          stripContext.fillStyle = frame.mat;
+          stripContext.strokeStyle = frame.edge;
+          stripContext.lineWidth = 3;
           stripContext.shadowColor = "rgba(54, 43, 31, .16)";
           stripContext.shadowBlur = 24;
           stripContext.shadowOffsetY = 8;
@@ -733,22 +752,25 @@
           stripContext.shadowColor = "transparent";
           stripContext.shadowBlur = 0;
           stripContext.shadowOffsetY = 0;
+          stripContext.strokeRect(45, 45, 810, 910);
+          stripContext.fillStyle = frame.edge;
+          stripContext.fillRect(77, 77, 746, 746);
           drawPhotoCover(photos[0], 82, 82, 736, 736);
-          stripContext.fillStyle = "#766b5d";
+          stripContext.fillStyle = frameStyles[selectedFrame].decoration === "blush" ? "#8f5a5d" : "#766b5d";
           stripContext.textAlign = "center";
           stripContext.font = "italic 34px Georgia, serif";
           stripContext.fillText("little moments", width / 2, 875);
-          stripContext.fillStyle = "#a29686";
+          stripContext.fillStyle = frame.edge;
           stripContext.font = "13px Segoe UI, sans-serif";
           stripContext.letterSpacing = "3px";
           stripContext.fillText(filmLooks[selectedFilm].name.toUpperCase(), width / 2, 918);
           stripContext.letterSpacing = "0";
+          drawFrameDecoration(frame, width, strip.height);
           return;
         }
 
-        stripContext.fillRect(0, 0, strip.width, strip.height);
-        const padding = 26;
-        const gap = selectedLayout.side >= 6 ? 8 : 13;
+        const padding = frame.rails ? 48 : 26;
+        const gap = Math.max(frame.gap, selectedLayout.side >= 6 ? 8 : frame.gap);
         const cellSize = (width - padding * 2 - gap * (selectedLayout.side - 1)) / selectedLayout.side;
         const photoPadding = selectedLayout.side >= 5 ? 2 : 5;
 
@@ -757,8 +779,13 @@
           const row = Math.floor(index / selectedLayout.side);
           const x = padding + column * (cellSize + gap);
           const y = padding + row * (cellSize + gap);
-          stripContext.fillStyle = "#fff";
+          stripContext.fillStyle = frame.mat;
+          stripContext.strokeStyle = frame.edge;
+          stripContext.lineWidth = selectedLayout.side >= 5 ? 1 : 2;
           stripContext.fillRect(x, y, cellSize, cellSize);
+          if (frame.doubleEdge) {
+            stripContext.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+          }
           drawPhotoCover(
             photo,
             x + photoPadding,
@@ -767,6 +794,39 @@
             cellSize - photoPadding * 2
           );
         });
+        drawFrameDecoration(frame, width, strip.height);
+      }
+
+      function drawFrameDecoration(frame, width, height) {
+        if (frame.rails) {
+          stripContext.fillStyle = selectedFrame === "clear" ? "#c9c9c6" : "#171411";
+          for (const x of [13, width - 35]) {
+            stripContext.fillRect(x, 0, 22, height);
+            for (let y = 12; y < height; y += 34) {
+              stripContext.fillStyle = frame.mat;
+              stripContext.fillRect(x + 6, y, 10, 18);
+              stripContext.fillStyle = selectedFrame === "clear" ? "#c9c9c6" : "#171411";
+            }
+          }
+          if (frame.decoration === "retro") {
+            stripContext.fillStyle = frame.edge;
+            stripContext.textAlign = "center";
+            stripContext.font = "bold 12px Segoe UI, sans-serif";
+            stripContext.fillText("35", 24, 21);
+            stripContext.fillText("35", width - 24, height - 12);
+          }
+        }
+
+        if (frame.decoration === "party" || frame.decoration === "blush") {
+          const color = frame.decoration === "blush" ? "#b96878" : "#d49a55";
+          stripContext.fillStyle = color;
+          stripContext.textAlign = "center";
+          stripContext.font = selectedLayout.side === 1 ? "28px Georgia, serif" : "22px Georgia, serif";
+          stripContext.fillText("✿", 21, 31);
+          stripContext.fillText("✦", width - 22, height - 12);
+          stripContext.fillText("✦", width - 22, 31);
+          stripContext.fillText("✿", 21, height - 12);
+        }
       }
 
       function drawPhotoCover(photo, x, y, width, height, context = stripContext) {
@@ -882,7 +942,7 @@
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
-          link.download = `little-moments-${selectedLayout.fileLabel}-${selectedFilm}.png`;
+          link.download = `little-moments-${selectedLayout.fileLabel}-${selectedFrame}-${selectedFilm}.png`;
           document.body.appendChild(link);
           link.click();
           link.remove();

@@ -337,6 +337,7 @@
     .secondary { margin-top: 9px; color: #51483d; background: #f1ebe2; }
     .secondary:hover:not(:disabled) { background: #e8dfd3; }
     button:disabled { cursor: not-allowed; opacity: .5; }
+    #retakeButton[hidden] { display: none; }
 
     .fine-print {
       margin: auto 0 0;
@@ -480,6 +481,7 @@
           <p class="status" id="status" role="status">Ready when you are. Camera access stays on your device.</p>
           <button class="primary" id="startButton" type="button">Start the booth</button>
           <button class="secondary" id="captureButton" type="button" disabled>Take my photos</button>
+          <button class="secondary" id="retakeButton" type="button" hidden>Remake photos</button>
           <p class="fine-print">Photos stay on your device. Phone cameras require a secure HTTPS connection.</p>
         </aside>
       </section>
@@ -493,7 +495,6 @@
         <div class="photo-retakes" id="photoRetakes" role="group" aria-label="Retake an individual photo"></div>
         <div class="result-actions">
           <button class="primary" id="downloadButton" type="button">Download photo layout</button>
-          <button class="secondary" id="retakeButton" type="button">Remake photos</button>
         </div>
       </section>
     </main>
@@ -690,6 +691,7 @@
         capturing = true;
         cancelled = false;
         photos.length = 0;
+        remakeButton.hidden = true;
         updateProgress();
         photoRetakes.replaceChildren();
         result.classList.remove("visible");
@@ -717,6 +719,7 @@
             renderStrip();
             renderPhotoRetakes();
             result.classList.add("visible");
+            remakeButton.hidden = false;
             setStatus("Your photo layout is ready to download!");
             result.scrollIntoView({ behavior: "smooth", block: "center" });
           } else {
@@ -920,6 +923,7 @@
         photoRetakes.replaceChildren();
         result.classList.remove("visible");
         stripContext.clearRect(0, 0, strip.width, strip.height);
+        remakeButton.hidden = true;
         setStatus(`Camera ready! Find your pose for ${selectedLayout.count} photo${selectedLayout.count === 1 ? "" : "s"}.`);
         captureButton.disabled = !stream;
         captureButton.focus();
